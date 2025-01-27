@@ -16,6 +16,12 @@ app = FastAPI(
     }
 )
 
+# Variabili globali per le statistiche
+stats = {
+    "total_samples_analyzed": 0,
+    "last_analysis": None
+}
+
 # Configurazione API Key
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
@@ -30,7 +36,6 @@ async def get_api_key(api_key_header: str = Security(api_key_header)):
         )
     return api_key_header
 
-# Root endpoint
 @app.get("/")
 async def root():
     return {
@@ -40,11 +45,11 @@ async def root():
         "endpoints": {
             "docs": "/docs",
             "health": "/api/v1/health",
-            "analyze": "/api/v1/analyze"
+            "analyze": "/api/v1/analyze",
+            "stats": "/api/v1/stats"
         }
     }
 
-# Health check endpoint
 @app.get("/api/v1/health")
 async def health_check():
     return {
@@ -53,11 +58,13 @@ async def health_check():
         "version": "1.0.0"
     }
 
-# Analisi endpoint
 @app.post("/api/v1/analyze", response_model=AnalysisResult)
 async def analyze_sample(data: SampleData, api_key: APIKey = Depends(get_api_key)):
     try:
         result = analyze_microbiome_sample(data)
+        # Aggiorna le statistiche
+        stats["total_samples_analyzed"] += 1
+        stats["last_analysis"] = datetime.utcnow()
         return result
     except Exception as e:
         raise HTTPException(
@@ -65,16 +72,14 @@ async def analyze_sample(data: SampleData, api_key: APIKey = Depends(get_api_key
             detail=str(e)
         )
 
-# Stats endpoint
 @app.get("/api/v1/stats")
 async def get_stats(api_key: APIKey = Depends(get_api_key)):
     return {
-        "total_samples_analyzed": 0,  # Da implementare con un database
-        "last_analysis": datetime.utcnow(),
+        "total_samples_analyzed": stats["total_samples_analyzed"],
+        "last_analysis": stats["last_analysis"],
         "api_version": "1.0.0"
     }
 
-# Error handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     return {
