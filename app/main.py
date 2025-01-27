@@ -5,29 +5,84 @@ from datetime import datetime
 from .models import SampleData, AnalysisResult
 from .utils.analysis import analyze_microbiome_sample
 
+# Configurazione FastAPI
 app = FastAPI(
     title="Urban Microbiome API",
     description="API for analyzing urban microbiome samples",
-    version="1.0.0"
+    version="1.0.0",
+    contact={
+        "name": "Support Team",
+        "email": "support@example.com"
+    }
 )
 
+# Configurazione API Key
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 API_KEY = os.getenv("API_KEY", "test-key")
 
+# Funzione di autenticazione
 async def get_api_key(api_key_header: str = Security(api_key_header)):
     if api_key_header != API_KEY:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid API Key"
+        )
     return api_key_header
 
+# Root endpoint
+@app.get("/")
+async def root():
+    return {
+        "name": "Urban Microbiome API",
+        "version": "1.0.0",
+        "description": "API for analyzing urban microbiome samples",
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/api/v1/health",
+            "analyze": "/api/v1/analyze"
+        }
+    }
+
+# Health check endpoint
+@app.get("/api/v1/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow(),
+        "version": "1.0.0"
+    }
+
+# Analisi endpoint
 @app.post("/api/v1/analyze", response_model=AnalysisResult)
 async def analyze_sample(data: SampleData, api_key: APIKey = Depends(get_api_key)):
     try:
         result = analyze_microbiome_sample(data)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
-@app.get("/api/v1/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow()}
+# Stats endpoint
+@app.get("/api/v1/stats")
+async def get_stats(api_key: APIKey = Depends(get_api_key)):
+    return {
+        "total_samples_analyzed": 0,  # Da implementare con un database
+        "last_analysis": datetime.utcnow(),
+        "api_version": "1.0.0"
+    }
+
+# Error handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    return {
+        "error": "Internal Server Error",
+        "detail": str(exc),
+        "timestamp": datetime.utcnow()
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
