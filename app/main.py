@@ -211,6 +211,25 @@ async def stripe_webhook(request: Request):
             detail=str(e)
         )
 
+# Dopo gli altri endpoint aggiungi:
+@app.get("/api/v1/stats")
+async def get_stats(api_key: APIKey = Depends(get_api_key)):
+    try:
+        # Recupera i dati da Stripe
+        stripe_data = stripe.PaymentIntent.list(limit=100)
+        total_payments = len(stripe_data.data)
+        
+        return {
+            "total_subscriptions": total_payments,
+            "last_payment": datetime.utcnow(),
+            "api_version": "1.0.0"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
