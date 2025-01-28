@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from enum import Enum
 
-# Enum per i piani
+# Enum per i piani di sottoscrizione
 class PlanTier(str, Enum):
     BASIC = "basic"
     PRO = "pro"
@@ -46,25 +46,23 @@ class SubscriptionResponse(BaseModel):
     checkout_url: str
     session_id: str
 
-# Modelli per la gestione degli utenti
-class UserSubscription(BaseModel):
-    user_id: str
-    plan: PlanTier
-    stripe_customer_id: str
-    stripe_subscription_id: str
-    status: str
-    current_period_end: datetime
-    requests_used: int = 0
-
-class SubscriptionUsage(BaseModel):
-    requests_used: int
-    requests_limit: int
-    remaining_requests: int
-    days_until_renewal: int
-
-class UserAPIKey(BaseModel):
+# Modelli per la sicurezza e autenticazione
+class APIKeyModel(BaseModel):
     key: str
     user_id: str
+    plan: PlanTier
     created_at: datetime
-    last_used: Optional[datetime] = None
-    is_active: bool = True
+    is_active: bool
+    last_used: Optional[datetime]
+    requests_count: int = 0
+
+class APIKeyResponse(BaseModel):
+    key: str
+    expires_at: datetime
+
+class SecurityLog(BaseModel):
+    timestamp: datetime
+    event_type: str
+    user_id: str
+    ip_address: Optional[str]
+    details: str
