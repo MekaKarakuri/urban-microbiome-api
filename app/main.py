@@ -33,9 +33,9 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 # Prezzi Stripe
 STRIPE_PRICE_IDS = {
-    PlanTier.BASIC: "price_1Qm0QYGr3bQE4NuNWPXbfc38",
-    PlanTier.PRO: "price_1Qm0SsGr3bQE4NuN0hr3XV9P",
-    PlanTier.ENTERPRISE: "price_1Qm0SsGr3bQE4NuNasV1fHlK"
+    PlanTier.BASIC: "price_1QmAryGr3bQE4NuNAelsEEaB",
+    PlanTier.PRO: "price_1QmAryGr3bQE4NuNaVAobSy8",
+    PlanTier.ENTERPRISE: "price_1QmAryGr3bQE4NuN0E14ssyM"
 }
 
 # Configurazione piani
