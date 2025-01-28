@@ -159,6 +159,9 @@ async def get_plans():
 @app.post("/api/v1/subscribe", response_model=SubscriptionResponse)
 async def create_subscription(payment: PaymentIntent):
     try:
+        # Usa l'URL di Render per il tuo servizio
+        base_url = "https://urban-microbiome-api.onrender.com"
+        
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -167,8 +170,8 @@ async def create_subscription(payment: PaymentIntent):
             }],
             mode='subscription',
             customer_email=payment.customer_email,
-            success_url='https://your-domain.com/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url='https://your-domain.com/cancel'
+            success_url=f"{base_url}/api/v1/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{base_url}/api/v1/cancel"
         )
         
         return SubscriptionResponse(
@@ -229,6 +232,21 @@ async def get_stats(api_key: APIKey = Depends(get_api_key)):
             status_code=500,
             detail=str(e)
         )
+
+@app.get("/api/v1/success")
+async def payment_success(session_id: str):
+    return {
+        "status": "success",
+        "message": "Payment completed successfully",
+        "session_id": session_id
+    }
+
+@app.get("/api/v1/cancel")
+async def payment_cancel():
+    return {
+        "status": "cancelled",
+        "message": "Payment was cancelled"
+    }
 
 if __name__ == "__main__":
     import uvicorn
